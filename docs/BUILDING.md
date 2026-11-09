@@ -14,17 +14,25 @@ folder (`ootmenu-python-overlay-2026-11-09.tar.gz`); the tables below still name
 ## Building
 
 ```
-make            # or ./docker-make
+make            # or ./docker-make; builds update v131072 by default
 make dist       # or ./docker-make dist
+./docker-make VERSIONS=v0       # cartridge 1.0 (main BuildID 33FA6C2C...)
+./docker-make VERSIONS=v0 dist  # cartridge 1.0 install tree
 ```
 
-Outputs, per game version (only `v131072` exists so far):
+Outputs, per game version:
 
 | File | What |
 |---|---|
 | `bin/v131072/subsdk9` | the module (NSO), added to the game's exefs |
 | `bin/v131072/E0F3CCFAF50065AE4EA01EB5AEB13B1A45DA3348.ips` | IPS32 patch for main (67 bytes) |
+| `bin/v0/subsdk9` | cartridge 1.0 module |
+| `bin/v0/33FA6C2C23848282A77E8B88A0A93F4887C55920.ips` | cartridge 1.0 IPS32 patch |
 | `dist/` | install trees, see [INSTALLATION.md](../INSTALLATION.md) |
+
+For the cartridge 1.0 address map, emulator results, and limits, see
+[PORT_V0.md](PORT_V0.md). The technical offsets below describe update v131072
+unless explicitly marked otherwise.
 
 The link fails if the module imports a symbol that isn't in `lib/imports.txt` (the functions main
 and sdk are known to export). A function we call but forgot to define would otherwise link as an

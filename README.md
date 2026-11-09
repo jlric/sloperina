@@ -4,8 +4,11 @@ A gz-style practice menu for **The Legend of Zelda: Ocarina of Time (Switch 2)**
 the game loads and runs itself (an exefs module, `subsdk9`, plus a 67-byte IPS patch to main). It works from
 Atmosphère's LayeredFS, an emulator's mod folder (Lichii / Eden: `load/`) or an offline patcher.
 
-Supported version: program `0400486024DEC000`, update v131072 (main build `E0F3CCFA…`). Other versions have
-different addresses and won't work.
+The original release supports update v131072 (main build `E0F3CCFA…`). This
+branch also builds an experimental cartridge **1.0** port (main BuildID
+`33FA6C2C23848282A77E8B88A0A93F4887C55920`); see
+[`docs/PORT_V0.md`](docs/PORT_V0.md) and the package's `README-1.0.txt`.
+The two builds use different address maps and IPS files.
 
 Source: [github.com/PracticeROM/sloperina](https://github.com/PracticeROM/sloperina). Website:
 [practicerom.com/oothd](https://practicerom.com/oothd).
@@ -24,6 +27,10 @@ Open the menu with **R + right stick down**. **L** selects, the D-pad moves and 
 goes back.
 
 ## Features
+
+The list below describes the original update v131072 mod. The cartridge 1.0
+port has been tested for menu navigation, rupees, Boomerang stock, a warp, and
+the air-wall display in Lichii; see [PORT_V0.md](docs/PORT_V0.md) for details.
 
 - **link**: health, heart containers, rupees, age and reload map; position, speed and map.
 - **warps**: any map and spawn point, at once, with the game's own fade.

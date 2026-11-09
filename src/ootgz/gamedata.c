@@ -66,6 +66,7 @@ void gd_reset(void)
     type_off[i] = 0;
   str_base = 0;
   str_mgr = 0;
+  str_type = 0;
 }
 
 static bool type_plausible(const gd_type_t *t)
@@ -229,14 +230,35 @@ static bool plausible_name(const char *s)
   return n >= 4 && n < GD_STR_LEN;
 }
 
-/* game.py finds the pair (Sequence_CurrentBanc, 0x1F) in the String64 hash table and
- * takes index 0's text at pair + 0x207C - 0x1F * 0x108. Same here, but the table is found
- * among the manager's type entries instead of by scanning the heap. */
+/* On the update, game.py finds the pair (Sequence_CurrentBanc, 0x1F) in the
+ * String64 hash table and derives index 0's text from it. Cartridge 1.0
+ * instead uses the validated descriptor and each record's current buffer. */
 static bool find_strings(void)
 {
   uint8_t *mgr = gd_manager();
   if (!mgr)
     return false;
+#if Z64HD_VERSION == Z64HD_V0
+  /* Cartridge 1.0 stores a pointer to each current String64 buffer at record+0x68.
+   * The descriptor and stride were independently validated by the live v0 binding. */
+  gd_type_t *t = (gd_type_t *)(mgr + 0x608);
+  if (!type_plausible(t) || t->count <= Z64HD_STR_ANCHOR_IDX)
+    return false;
+  uint32_t *e = gd_lookup(t, Z64HD_STR_ANCHOR_HASH);
+  if (!e || e[1] != Z64HD_STR_ANCHOR_IDX)
+    return false;
+  uintptr_t record = (uintptr_t)t->objects + (size_t)e[1] * Z64HD_STR_STRIDE;
+  if (!sys_mapped(record + 0x68, 8, SYS_PERM_R))
+    return false;
+  uintptr_t current = sys_ptr(record + 0x68);
+  if (!current || !sys_mapped(current, GD_STR_LEN, SYS_PERM_R | SYS_PERM_W) ||
+      !plausible_name((const char *)current))
+    return false;
+  str_base = (uintptr_t)t->objects;
+  str_mgr = mgr;
+  str_type = t;
+  return true;
+#else
   if (str_base && str_mgr == mgr && plausible_name((char *)str_base + GD_STR_MAP * Z64HD_STR_STRIDE))
     return true;
   str_base = 0;
@@ -259,20 +281,27 @@ static bool find_strings(void)
     }
   }
   return false;
+#endif
 }
 
 const char *gd_get_str(int idx)
 {
-  if (!find_strings())
+  if (!find_strings() || idx < 0 || idx >= (int)str_type->count)
     return 0;
+#if Z64HD_VERSION == Z64HD_V0
+  uintptr_t record = str_base + (size_t)idx * Z64HD_STR_STRIDE;
+  uintptr_t value = sys_ptr(record + 0x68);
+  return value && sys_mapped(value, GD_STR_LEN, SYS_PERM_R) ? (const char *)value : 0;
+#else
   return (const char *)(str_base + (uintptr_t)idx * Z64HD_STR_STRIDE);
+#endif
 }
 
 bool gd_set_str(int idx, const char *s)
 {
-  if (!find_strings())
+  char *d = (char *)gd_get_str(idx);
+  if (!d || !sys_mapped((uintptr_t)d, GD_STR_LEN, SYS_PERM_R | SYS_PERM_W))
     return false;
-  char *d = (char *)(str_base + (uintptr_t)idx * Z64HD_STR_STRIDE);
   int i = 0;
   for (; i < GD_STR_LEN - 1 && s[i]; i++)
     d[i] = s[i];

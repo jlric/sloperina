@@ -6,13 +6,16 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define Z64HD_V0 0
 #define Z64HD_V131072 1
 
 #ifndef Z64HD_VERSION
 #define Z64HD_VERSION Z64HD_V131072
 #endif
 
-#if Z64HD_VERSION == Z64HD_V131072
+#if Z64HD_VERSION == Z64HD_V0
+#include "z64hd_v0.h"
+#elif Z64HD_VERSION == Z64HD_V131072
 #include "z64hd_v131072.h"
 #else
 #error unknown Z64HD_VERSION

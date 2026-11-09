@@ -264,6 +264,10 @@ static bool read_camera(cam_t *c)
     return false;
   const float *pos = (const float *)(a + 0x38), *look = (const float *)(a + 0x44);
   float fov = *(const float *)(a + 0x130), aspect = *(const float *)(a + 0x140);
+  for (int i = 0; i < 3; i++)
+    if (!(pos[i] > -100000.0f && pos[i] < 100000.0f &&
+          look[i] > -100000.0f && look[i] < 100000.0f))
+      return false;
   if (!(fov > 0.1f && fov < 3.0f) || !(aspect > 0.5f && aspect < 4.0f))
     return false;
   float f[3] = { look[0] - pos[0], look[1] - pos[1], look[2] - pos[2] };

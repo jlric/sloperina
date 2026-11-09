@@ -19,7 +19,7 @@ the approaches that are known not to work. [`docs/BUILDING.md`](docs/BUILDING.md
 
 ## After changing code
 
-1. `./docker-make dist`. It must build without warnings; the link fails if the module would import a symbol that
+1. `./docker-make dist` for update v131072, or `./docker-make VERSIONS=v0 dist` for cartridge 1.0. It must build without warnings; the link fails if the module would import a symbol that
    isn't in `lib/imports.txt` (add one only after checking main or sdk exports it).
 2. Copy `dist/lichii/load/0400486024DEC000/sloperinaGZ/exefs/*` into the emulator's
    `load/0400486024DEC000/sloperinaGZ/exefs/` (or install as in [`INSTALLATION.md`](INSTALLATION.md)) and restart the game.

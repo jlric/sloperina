@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "z64hd.h"
 
 uint32_t murmur3(const char *s);
 
@@ -42,8 +43,14 @@ bool      gd_set_enum(uint32_t hash, uint32_t value);
 /* String64 fields by index (game.py STR_IDX). */
 enum {
   GD_STR_TUNIC = 0x10, GD_STR_ARROW = 0x11, GD_STR_BOOTS = 0x12, GD_STR_OCARINA = 0x15,
-  GD_STR_SHIELD = 0x16, GD_STR_SWORD = 0x17, GD_STR_MAP = 0x1F, GD_STR_EVENT = 0x20,
+  GD_STR_SHIELD = 0x16, GD_STR_SWORD = 0x17,
+#if Z64HD_VERSION == Z64HD_V0
+  GD_STR_MAP = 0x1D, GD_STR_EVENT = 0x1E,
+  GD_STR_STARTER = 0x1F, GD_STR_NEXT_MAP = 0x20, GD_STR_SPAWN = 0x21,
+#else
+  GD_STR_MAP = 0x1F, GD_STR_EVENT = 0x20,
   GD_STR_STARTER = 0x21, GD_STR_NEXT_MAP = 0x22, GD_STR_SPAWN = 0x23,
+#endif
 };
 #define GD_STR_LEN 64
 const char *gd_get_str(int idx);           /* NULL if not found */

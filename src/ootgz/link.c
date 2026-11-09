@@ -45,8 +45,71 @@ bool link_drawn_pos(vec3f_t *out)
 
 uintptr_t camera(void)
 {
+#if Z64HD_VERSION == Z64HD_V0
+  /* The 1.0 render view registry has a stable hashed "3D" entry. Its view is
+   * exposed at a +0xA8 subobject offset relative to the native camera getter
+   * (main+0x34e0710), so the regular camera is at view+0x78. This is the same
+   * object whose +0x38/+0x44 positions and +0x130/+0x140 FOV/aspect were
+   * read in Castle Town. Resolve afresh: views can be replaced on a warp. */
+  enum { HASH_3D = 0x62A726DBu };
+  uintptr_t cell = sys_ptr(MAIN(Z64HD_VIEW_REG_CELL));
+  uintptr_t global = cell ? sys_ptr(cell) : 0;
+  uintptr_t registry = global ? sys_ptr(global + 0x38) : 0;
+  uint32_t mask;
+  if (!registry || !sys_read32(registry + 0x108, &mask))
+    return 0;
+  uint32_t index = UINT32_MAX;
+  for (unsigned bucket = 0; bucket < 32; bucket++) {
+    if (!(mask & (1u << bucket)))
+      continue;
+    uintptr_t child = sys_ptr(registry + 8 + 8 * bucket);
+    uint32_t capacity, count;
+    if (!child || !sys_read32(child, &capacity) ||
+        !sys_read32(child + 0x10, &count) || !count ||
+        count > capacity || count > 4096)
+      continue;
+    uintptr_t keys = sys_ptr(child + 8);
+    if (!keys || !sys_mapped(keys, 4 * count, SYS_PERM_R))
+      continue;
+    unsigned lo = 0, hi = count;
+    while (lo < hi) {
+      unsigned mid = (lo + hi) / 2;
+      uint32_t key = *(const uint32_t *)(keys + 4 * mid);
+      if (key < HASH_3D)
+        lo = mid + 1;
+      else
+        hi = mid;
+    }
+    if (lo < count && *(const uint32_t *)(keys + 4 * lo) == HASH_3D &&
+        sys_read32(child + 0x38, &index))
+      break;
+  }
+  if (index == UINT32_MAX)
+    return 0;
+  cell = sys_ptr(MAIN(Z64HD_VIEW_MGR_CELL));
+  uintptr_t manager = cell ? sys_ptr(cell) : 0;
+  uint32_t count;
+  if (!manager || !sys_read32(manager + 0x20, &count) ||
+      count > 4096 || index >= count)
+    return 0;
+  uintptr_t views = sys_ptr(manager + 0x28);
+  uintptr_t view = views ? sys_ptr(views + 8 * index) : 0;
+  if (!view || !sys_mapped(view + 0x78, 0xD8, SYS_PERM_R))
+    return 0;
+  /* Native getter chooses the alternate only when both flag groups are set
+   * and the holder exists; otherwise it returns view+0x78 or its fallback. */
+  uint16_t flags = *(const uint16_t *)(view + 0x90);
+  uintptr_t holder = ((flags & 0x21) && (flags & 0x2)) ? sys_ptr(view + 0x148) : 0;
+  uintptr_t selected = holder ? holder + 8 : sys_ptr(view + 0x78);
+  if (!selected || selected == MAIN(Z64HD_FALLBACK_CAMERA) ||
+      !sys_mapped(selected + 0x38, 0x140 - 0x38 + 4, SYS_PERM_R) ||
+      sys_ptr(views + 8 * index) != view)
+    return 0;
+  return selected;
+#else
   uintptr_t p = sys_ptr(MAIN(Z64HD_CAMERA_PTR));
   return p ? sys_ptr(p + 0x68) : 0;
+#endif
 }
 
 uint32_t frame_counter(void)

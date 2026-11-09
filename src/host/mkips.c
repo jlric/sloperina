@@ -16,7 +16,7 @@
 #include <string.h>
 
 #include "../ootgz/ootgz_version.h"
-#include "../ootgz/z64hd_v131072.h"
+#include "../ootgz/z64hd.h"
 
 #define NSO_HEADER 0x100
 

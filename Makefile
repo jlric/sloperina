@@ -15,8 +15,10 @@ CC                    = $(TOOLS)gcc
 ELF2NSO               = $(DEVKITPRO)/tools/bin/elf2nso
 HOSTCC               ?= gcc
 
-VERSIONS              = v131072
+VERSIONS             ?= v131072
 PROGRAM_ID            = 0400486024DEC000
+BUILD_ID-v0           = 33FA6C2C23848282A77E8B88A0A93F4887C55920
+VERSION_DEFINE-v0     = Z64HD_V0
 BUILD_ID-v131072      = E0F3CCFAF50065AE4EA01EB5AEB13B1A45DA3348
 VERSION_DEFINE-v131072 = Z64HD_V131072
 SUBSDK                = subsdk9
@@ -76,16 +78,15 @@ $(BINDIR)/$(1)/ootgz.elf: $(patsubst $(SRCDIR)/%,$(OBJDIR)/$(1)/%.o,$(basename $
 	if [ -n "$$$$missing" ]; then echo "error: not defined, and not a known import (lib/imports.txt):"; echo "$$$$missing"; rm -f $$@; exit 1; fi
 $(BINDIR)/$(1)/$(SUBSDK): $(BINDIR)/$(1)/ootgz.elf
 	$(ELF2NSO) $$< $$@
-$(BINDIR)/$(1)/$(BUILD_ID-$(1)).ips: $(OBJDIR)/host/mkips | $(BINDIR)/$(1)
-	$(OBJDIR)/host/mkips $$@
+$(BINDIR)/$(1)/$(BUILD_ID-$(1)).ips: $(OBJDIR)/host/mkips-$(1) | $(BINDIR)/$(1)
+	$(OBJDIR)/host/mkips-$(1) $$@
+$(OBJDIR)/host/mkips-$(1): $(HOSTDIR)/mkips.c $(SRCDIR)/z64hd.h $(SRCDIR)/z64hd_v$(subst v,,$(1)).h $(SRCDIR)/ootgz_version.h
+	mkdir -p $$(@D)
+	$(HOSTCC) -std=c11 -O2 -Wall -DZ64HD_VERSION=$(VERSION_DEFINE-$(1)) -o $$@ $$<
 $(OBJDIR)/$(1) $(BINDIR)/$(1):
 	mkdir -p $$@
 endef
 $(foreach v,$(VERSIONS),$(eval $(call version_rules,$(v))))
-
-$(OBJDIR)/host/mkips: $(HOSTDIR)/mkips.c $(SRCDIR)/z64hd_v131072.h $(SRCDIR)/ootgz_version.h
-	mkdir -p $(@D)
-	$(HOSTCC) -std=c11 -O2 -Wall -o $@ $<
 
 # Install trees. Atmosphère convention (also what a Switch 2 CFW with LayeredFS would need):
 #   atmosphere/contents/<program id>/exefs/subsdk9

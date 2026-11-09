@@ -1,5 +1,8 @@
 # Installing sloperinaGZ
 
+For the cartridge 1.0 port in this branch, see [PORT_V0.md](docs/PORT_V0.md).
+The instructions below describe the original v131072 release package.
+
 sloperinaGZ is two small files that the game loads itself: **`subsdk9`** (the menu) and
 **`E0F3CCFAF50065AE4EA01EB5AEB13B1A45DA3348.ips`** (a patch that loads it). You need both.
 
